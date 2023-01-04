@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+#define lx (nd<<1)
+#define rx ((nd<<1)|1)
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+const int N = 100005;
+int n,cnt,a[N],sz[N],ans[N],seg[N<<2];
+vector<int>g[N],v[N];
+
+int dfs(int nd,int p){
+	sz[nd] = 1; 
+	for(auto&it:g[nd]){
+		if(it == p)continue;
+		sz[nd] += dfs(it,nd); 
+	}
+	return sz[nd]; 
+}
+
+void upd(int nd,int l,int r,int id,int val){
+	if(l == r)return void(seg[nd] += val);
+	int mid = (l + r) >> 1;
+	if(id <= mid)upd(lx,l,mid,id,val);
+	else upd(rx,mid+1,r,id,val);
+	seg[nd] = seg[lx]+seg[rx]; 
+}
+
+int get(int nd,int l,int r,int s,int e){
+	if(l > e || r < s)return 0;
+	if(l >= s && r <= e)return seg[nd];
+	int mid = (l + r) >> 1;
+	return get(lx,l,mid,s,e)+get(rx,mid+1,r,s,e);
+}
+
+void dfs2(int nd,int p,bool keep){
+	int big = 0;
+	for(auto&it:g[nd]){
+		if(it != p && sz[it] > sz[big])
+			big = it; 
+	}
+	for(auto&it:g[nd]){
+		if(it != p && it != big)
+			dfs2(it,nd,0);
+	}
+	if(big){
+		dfs2(big,nd,1);
+		swap(v[nd],v[big]);
+	}
+	v[nd].push_back(nd);
+	upd(1,0,n,a[nd],1);
+	for(auto&it:g[nd]){
+		if(it == p || it == big)continue;
+		for(auto&x:v[it]){
+			v[nd].push_back(x);
+			upd(1,0,n,a[x],1);
+		}
+	}
+	ans[nd] = get(1,0,n,a[nd]+1,n);
+	if(!keep){
+		for(auto&it:v[nd]){
+			upd(1,0,n,a[it],-1);
+		}
+	}
+}
+
+signed main(){
+
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	freopen("promote.in","r",stdin);
+	freopen("promote.out","w",stdout);
+
+	cin>>n;
+	map<int,int>mp;
+	for(int i=1;i<=n;++i){
+		cin>>a[i];
+		mp[a[i]]; 
+	}
+	for(auto&it:mp){
+		it.second = cnt++; 
+	}
+	for(int i=1;i<=n;++i)
+		a[i] = mp[a[i]]; 
+	for(int i=2;i<=n;++i){
+		int p;cin>>p;
+		g[p].push_back(i);
+	}
+	cnt = 0; 
+	dfs(1,1);
+	dfs2(1,1,1);
+	for(int i=1;i<=n;++i)cout<<ans[i]<<'\n';
+
+}
