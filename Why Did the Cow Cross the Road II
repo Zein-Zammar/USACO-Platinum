@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+#define lx (nd<<1)
+#define rx ((nd<<1)|1)
+using namespace std;
+
+const int N = 100005;
+int n,a[N],p[N];
+int seg[N<<2];
+
+void upd(int nd,int l,int r,int pos,int v){
+	if(l == r)return void(seg[nd] = max(seg[nd],v));
+	int mid = (l + r) >> 1;
+	if(pos <= mid){
+		upd(lx,l,mid,pos,v);
+	}
+	else{
+		upd(rx,mid+1,r,pos,v);
+	}
+	seg[nd] = max(seg[lx],seg[rx]);
+}
+
+int get(int nd,int l,int r,int s,int e){
+	if(l > e || r < s)return 0;
+	if(l >= s && r <= e)return seg[nd];
+	int mid = (l + r) >> 1;
+	return max(get(lx,l,mid,s,e),get(rx,mid+1,r,s,e));
+}
+
+signed main(){
+
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	freopen("nocross.in","r",stdin);
+	freopen("nocross.out","w",stdout);
+
+	cin>>n;
+	for(int i=0;i<n;++i)cin>>a[i];
+	for(int i=0;i<n;++i){
+		int x;cin>>x;
+		p[x] = i+1; 
+	}
+	for(int i=0;i<n;++i){
+		vector<int>tmp;
+		for(int j=max(1,a[i]-4);j<=min(n,a[i]+4);++j)
+			tmp.push_back(p[j]);
+		sort(tmp.rbegin(),tmp.rend());
+		for(int j=0;j<(int)tmp.size();++j){
+			upd(1,0,n,tmp[j],get(1,0,n,0,tmp[j]-1)+1);
+		}
+	}
+	cout<<get(1,0,n,0,n);
+
+}
