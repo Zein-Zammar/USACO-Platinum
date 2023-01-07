@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n,k,dp[300005],pref[300005];
+string s; 
+multiset<int>dps,val[300005];
+
+signed main(){
+
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	freopen("redistricting.in","r",stdin);
+	freopen("redistricting.out","w",stdout);
+
+	cin>>n>>k>>s;
+	for(int i=0;i<n;++i)
+		pref[i+1] = pref[i]+(s[i] == 'H' ? 1 : -1);
+	dps.insert(0);
+	val[0].insert(pref[0]);
+	for(int i=1;i<=n;++i){
+		if(i > k){
+			dps.erase(dps.find(dp[i-k-1]));
+			val[dp[i-k-1]].erase(val[dp[i-k-1]].find(pref[i-k-1]));
+		}
+		if(*val[*dps.begin()].begin() < pref[i])
+			dp[i] = *dps.begin();
+		else 
+			dp[i] = 1+*dps.begin();
+		dps.insert(dp[i]);
+		val[dp[i]].insert(pref[i]);
+	}
+	cout<<dp[n];
+}
