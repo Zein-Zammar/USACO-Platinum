@@ -1,0 +1,82 @@
+/*
+ *    author: NeroZein
+ *    created: 18.01.2023 12:24:26
+*/
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+signed main(){
+
+	freopen("disrupt.in","r",stdin);
+	freopen("disrupt.out","w",stdout);
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+
+	int n, m;
+	cin >> n >> m;
+	vector<vector<pair<int,int>>>g(n); 
+	for(int i = 0; i < n-1; ++i){
+		int u, v;
+		cin >> u >> v; 
+		--u, --v; 
+		g[u].emplace_back(v, i); 
+		g[v].emplace_back(u, i); 
+	} 
+	
+	vector<set<pair<int,int>>>at(n); 
+	for(int i = 0; i < m; ++i){
+		int u, v, w;
+		cin >> u >> v >> w;
+		--u, --v;
+		at[u].emplace(w, i);
+		at[v].emplace(w, ~i); 
+	}
+	
+	vector<int>ans(n-1); 
+	vector<set<pair<int,int>>>se(n); 
+	function<void(int,int)>Dfs = [&](int v, int p){
+		for(auto [u, i] : g[v]){
+			if(u == p){
+				continue;
+			}
+			Dfs(u, v); 
+			if(se[u].size()){
+				ans[i] = se[u].begin()->first;				
+			}
+			else{
+				ans[i] = -1; 
+			}
+			if(se[u].size() > se[v].size()){
+				swap(se[u], se[v]);
+			}
+			for(auto [w, j] : se[u]){
+				if(se[v].count(make_pair(w, ~j))){
+					se[v].erase(make_pair(w, ~j));
+				}
+				else{
+					se[v].emplace(w, j); 
+				}
+			}
+		}
+		for(auto [w, j] : at[v]){
+			if(se[v].count(make_pair(w,~j))){
+				se[v].erase(make_pair(w, ~j)); 
+			}
+			else{
+				se[v].emplace(w, j); 
+			}
+		}
+	};
+	Dfs(0, 0); 
+	
+	for(auto i : ans){
+		cout << i << '\n';
+	}
+	
+}
