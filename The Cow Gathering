@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 100005;
+
+vector<int> g[N];
+vector<int> a[N];
+int deg[N], b[N];
+bool vis[N], can[N];
+
+void Dfs (int v, int p) {
+  if (a[v].size()) return;
+  can[v] = true;
+  for (int u : g[v]) {
+    if (u == p) continue;
+    Dfs(u, v); 
+  }
+}
+
+signed main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  freopen("gathering.in", "r", stdin);
+  freopen("gathering.out", "w", stdout);
+  int n, m;
+  cin >> n >> m;
+  for (int i = 0; i < n - 1; ++i) {
+    int u, v;
+    cin >> u >> v;
+    g[u].push_back(v);
+    g[v].push_back(u);
+    deg[u]++;
+    deg[v]++;
+  } 
+  for (int i = 0; i < m; ++i) {
+    int u, v;
+    cin >> u >> v;
+    b[v]++;
+    a[u].push_back(v); 
+  }
+  vector<int> v; 
+  for (int i = 1; i <= n; ++i) {
+    if (!b[i] && deg[i] <= 1) {
+      vis[i] = 1;
+      v.push_back(i); 
+    }
+  }
+  for (int i = 0; i < n; ++i) {
+    if (v.size() == i) {
+      for (int j = 0; j < n; ++j) {
+        cout << 0 << '\n';
+      }
+      return 0;
+    }
+    int cur = v[i];
+    for (int u : g[cur]) {
+      deg[u]--;
+      if (deg[u] <= 1 && !vis[u] && b[u] == 0) {
+        v.push_back(u); 
+        vis[u] = true; 
+      }
+    }
+    for (int u : a[cur]) {
+      b[u]--;
+      if (deg[u] <= 1 && b[u] == 0 && !vis[u]) {
+        vis[u] = true;
+        v.push_back(u); 
+      }
+    }
+  }
+  Dfs(v.back(), -1); 
+  for (int i = 1; i <= n; ++i) {
+    cout << can[i] << '\n';
+  }
+  return 0; 
+}
