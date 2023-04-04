@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+const int MOD = 1e9 + 7;
+ 
+struct mi {
+	int v;
+	mi() : v(0) {}
+	mi(int _v) : v(_v) {
+		if (v >= MOD) v -= MOD;
+	}
+};
+mi operator*(mi a, mi b) { return mi((long long) a.v * b.v % MOD); }
+mi operator+(mi a, mi b) { return mi(a.v + b.v); }
+mi operator-(mi a, mi b) { return mi(a.v + MOD - b.v); }
+ 
+mi order(int x) { return 1 + (x == 0 ? 0 : x * order(x - 1)); }
+ 
+signed main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n, m;
+  cin >> n >> m;
+  vector<string> s(m); 
+  for (int i = 0; i < m; ++i) {
+    cin >> s[i];
+  }
+  vector<int> cnt(1 << m);
+  for (int i = 0; i < n; ++i) {
+    int mask = 0; 
+    for (int j = 0; j < m; ++j) {
+      if (s[j][i] == 'H') mask |= 1 << j; 
+    }
+    ++cnt[mask]; 
+  }
+  mi ans = 0; 
+  vector<mi> dp(1 << m);
+  vector<vector<mi>> sos(1 << m, vector<mi> (m));
+  for (int s = (1 << m) - 1; s >= 0; --s) {
+    mi sum = 1; 
+    for (int j = 0; j < m; ++j) {
+      if (!(s >> j & 1)) sum = sum + sos[s | (1 << j)][j]; 
+    }
+    dp[s] = sum * (order(cnt[s]) - 1);
+    sos[s][0] = dp[s]; 
+    ans = ans + dp[s]; 
+    for (int j = 0; j < m - 1; ++j) {
+      sos[s][j + 1] = sos[s][j];
+      if (!(s >> j & 1)) sos[s][j + 1] = sos[s][j + 1] + sos[s | (1 << j)][j];
+    }
+  }
+  cout << ans.v << '\n';
+  return 0;
+}
