@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int K = 202;
+const int N = 20004;
+
+int hub[K]; 
+int dis[2][K][N]; //0 from, 1 to
+vector<pair<int, int>> g[2][N];
+
+signed main() {
+	freopen("vacationgold.in", "r", stdin);
+	freopen("vacationgold.out", "w", stdout);
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n, m, k, q;
+  cin >> n >> m >> k >> q;
+  for (int i = 0; i < m; ++i) {
+    int u, v, w;
+    cin >> u >> v >> w;
+    g[0][u].emplace_back(v, w);
+    g[1][v].emplace_back(u, w); 
+  }  
+  auto Dij = [&](int src, bool dir) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    fill(dis[dir][src], dis[dir][src] + N, 1e9);
+    int vv = hub[src];
+    dis[dir][src][vv] = 0;
+    pq.emplace(0, vv);
+    while (!pq.empty()) {
+      auto[c, v] = pq.top();
+      pq.pop(); 
+      if (dis[dir][src][v] != c) {
+        continue;
+      }
+      for (auto [u, w] : g[dir][v]) {
+        if (c + w < dis[dir][src][u]) {
+          dis[dir][src][u] = c + w;
+          pq.emplace(c + w, u);
+        }
+      }
+    }
+  };
+  for (int i = 0; i < k; ++i) {
+    cin >> hub[i]; 
+     Dij(i, 0); 
+     Dij(i, 1); 
+  }
+  int tot = 0; 
+  long long ans = 0; 
+  while (q--) {
+    int u, v;
+    cin >> u >> v;
+     int tmp = INT_MAX;
+     for (int i = 0; i < k; ++i) {
+       tmp = min(tmp, dis[1][i][u] + dis[0][i][v]);
+     }
+     if (tmp < 1e9) {
+       tot++;
+       ans += tmp;
+     }
+  }
+   cout << tot << '\n' << ans << '\n';
+  return 0;
+}
