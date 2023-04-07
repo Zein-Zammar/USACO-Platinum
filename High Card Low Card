@@ -1,0 +1,87 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+struct node {
+	int nc, c, p;
+	void merge (const node& x, const node& y) {
+		int mn = min(x.nc, y.c); 
+		p = x.p + y.p + mn;
+		nc = x.nc + y.nc - mn;
+		c = x.c + y.c - mn;
+	}
+}; 
+
+const int N = 100005;
+
+node seg[N << 1]; 
+
+void upd (int nd, int l, int r, int p, int v, bool c) {
+	if (l == r) {
+		(c ? seg[nd].c : seg[nd].nc) = 1;
+		return; 
+	}
+	int mid = (l + r) >> 1;
+	int rs = nd + ((mid - l + 1) << 1);
+	if (p <= mid) {
+		upd(nd + 1, l, mid, p, v, c); 
+	} else {
+		upd(rs, mid + 1, r, p, v, c); 
+	}
+	seg[nd].merge(seg[nd + 1], seg[rs]); 
+}
+
+vector<int> solve (const vector<int>& a, const vector<int>& b) {
+	int n = (int) a.size(); 
+	vector<int> ret(n + 1); 
+	for (int i = 0; i < N * 2; ++i) {
+		seg[i].nc = seg[i].c = seg[i].p = 0; 
+	} 
+	for (int i = 0; i < n; ++i) {
+		upd(0, 0, n * 2, a[i], 1, 0); 
+		upd(0, 0, n * 2, b[i], 1, 1); 
+		ret[i + 1] = seg[0].p;
+	}
+	return ret;
+}
+
+signed main(){
+	freopen("cardgame.in", "r", stdin);
+	freopen("cardgame.out", "w", stdout); 
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int n;
+	cin >> n;
+	vector<int> a(n); 
+	vector<bool> e(2 * n); 
+	for (int i = 0; i < n; ++i) {
+		cin >> a[i];
+		--a[i]; 
+		e[a[i]] = true; 
+	}
+	vector<int> b;
+	for (int i = 2 * n - 1; i >= 0; --i) {
+		if (!e[i]) {
+			b.push_back(i); 
+		}
+	}
+	vector<int> high = solve(a, b); 
+	reverse(a.begin(), a.end()); 
+	reverse(b.begin(), b.end()); 
+	for (int i = 0; i < n; ++i) {
+		a[i] = 2 * n - 1 - a[i];
+		b[i] = 2 * n - 1 - b[i];
+	}
+	vector<int> low = solve(a, b); 
+	int ans = 0; 
+	for (int i = 0; i <= n; ++i) {
+		ans = max(ans, low[i] + high[n - i]); 
+	}
+	cout << ans << '\n';
+	return 0;
+}
