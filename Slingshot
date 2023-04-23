@@ -1,0 +1,143 @@
+#include "bits/stdc++.h"
+#define int long long
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+struct slings {
+	int x, y, t;
+	bool operator < (const slings& b) {
+		return x < b.x;
+	};
+};
+
+struct manures {
+	int x, y, id;
+	bool operator < (const manures& b) {
+		return x < b.x;
+	};
+};
+
+const int N = 100005;
+
+slings sling[N];
+manures manure[N]; 
+int sling_y_id[N];
+int manure_y_id[N];
+int ans[N]; 
+
+struct Seg {
+	int n; 
+	vector<int> seg;
+	Seg (const int& n_) {
+		n = n_;
+		seg.resize(2 * n - 1);
+	}
+	void init() {
+		for (int i = 0; i < 2 * n - 1; ++i) {
+			seg[i] = INT_MAX;
+		} 	
+	}
+	void upd (int nd, int l, int r, int p, int v) {
+		if (l == r) {
+			seg[nd] = min(seg[nd], v);
+			return;
+		}
+		int mid = (l + r) >> 1;
+		int rs = nd + ((mid - l + 1) << 1);
+		if (p <= mid) {
+			upd(nd + 1, l, mid, p, v);
+		} else {
+			upd(rs, mid + 1, r, p, v);
+		}
+		seg[nd] = min(seg[nd + 1], seg[rs]); 
+	}
+	void upd (int p, int v) {
+		upd(0, 0, n - 1, p, v); 
+	}
+	int qry (int nd, int l, int r, int s, int e) {
+		if (l >= s && r <= e) {
+			return seg[nd];
+		}
+		int mid = (l + r) >> 1;
+		int rs = nd + ((mid - l + 1) << 1);
+		if (mid >= e) {
+			return qry(nd + 1, l, mid, s, e); 
+		} else {
+			if (mid < s) {
+				return qry(rs, mid + 1, r, s, e); 
+			} else {
+				return min(qry(nd + 1, l, mid, s, e), qry(rs, mid + 1, r, s, e)); 
+			}
+		}
+	}
+	int qry (int l, int r) {
+		return qry(0, 0, n - 1, l, r); 
+	}
+};
+
+signed main(){
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	freopen("slingshot.in", "r", stdin);
+	freopen("slingshot.out", "w", stdout);
+	int n, q;
+	cin >> n >> q;
+	vector<int> ys; 
+	for (int i = 0; i < n; ++i) {
+		cin >> sling[i].x >> sling[i].y >> sling[i].t;
+		ys.push_back(sling[i].y); 
+	}
+	for (int i = 0; i < q; ++i) {
+		cin >> manure[i].x >> manure[i].y;
+		manure[i].id = i;
+		ys.push_back(manure[i].y); 
+	}
+	sort(sling, sling + n);
+	sort(manure, manure + q); 
+	sort(ys.begin(), ys.end()); 
+	ys.resize(unique(ys.begin(), ys.end()) - ys.begin()); 
+	for (int i = 0; i < n; ++i) {
+		sling_y_id[i] = lower_bound(ys.begin(), ys.end(), sling[i].y) - ys.begin();
+	}
+	for (int i = 0; i < q; ++i) {
+		manure_y_id[i] = lower_bound(ys.begin(), ys.end(), manure[i].y) - ys.begin(); 
+	}
+	Seg up(ys.size()), down(ys.size()); 
+	up.init(), down.init(); 
+	int p = 0; 
+	for (int i = 0; i < q; ++i) {
+		while (p < n && sling[p].x <= manure[i].x) {
+			up.upd(sling_y_id[p], -sling[p].x + sling[p].y + sling[p].t);
+			down.upd(sling_y_id[p], -sling[p].x - sling[p].y + sling[p].t);
+			p++;
+		}
+		ans[manure[i].id] = min({manure[i].x + manure[i].y + down.qry(0, manure_y_id[i]), 
+														manure[i].x - manure[i].y + up.qry(manure_y_id[i], ys.size() - 1),
+														abs(manure[i].x - manure[i].y)}); 
+	}
+	up.init(), down.init(); 
+	reverse(sling, sling + n);
+	reverse(sling_y_id, sling_y_id + n); 
+	reverse(manure, manure + q); 
+	reverse(manure_y_id, manure_y_id + q); 
+	p = 0;
+	for (int i = 0; i < q; ++i) {
+		while (p < n && sling[p].x >= manure[i].x) {
+			up.upd(sling_y_id[p], sling[p].x + sling[p].y + sling[p].t);
+			down.upd(sling_y_id[p], sling[p].x - sling[p].y + sling[p].t);
+			p++;
+		}
+		ans[manure[i].id] = min({-manure[i].x + manure[i].y + down.qry(0, manure_y_id[i]),
+														 -manure[i].x - manure[i].y + up.qry(manure_y_id[i], ys.size() - 1),
+														 ans[manure[i].id]});
+	}
+	for (int i = 0; i < q; ++i) {
+		cout << ans[i] << '\n';
+	}
+	return 0;
+}
