@@ -1,0 +1,109 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+struct Bit {
+  int n;
+  vector<long long> tree; 
+  Bit (int n_) : n(n_) {
+    tree.resize(n + 1); 
+  }
+  inline void upd (int id, int v) {
+    assert(id != 0); 
+    while (id <= n) {
+      tree[id] += v;
+      id += id & -id;
+    }
+  }
+  inline void upd (int l, int r, int v) {
+    upd(l, v);
+    upd(r + 1, -v);
+  }
+  inline long long qry (int id) {
+    long long ret = 0;
+    while (id) {
+      ret += tree[id];
+      id -= id & -id; 
+    }
+    return ret;
+  }
+  inline long long qry (int l, int r) {
+    return qry(r) - qry(l - 1); 
+  }
+};
+
+const int N = 100005;
+
+vector<int> g[N]; 
+int sz[N], ord[N]; 
+int idd, in[N], out[N]; 
+set<pair<int, int>> se[N]; 
+
+inline void Dfs (int v, int p) {
+  sz[v] = 1; 
+  in[v] = ++idd;
+  ord[idd] = v; 
+  for (int u : g[v]) {
+    if (u == p) {
+      continue;
+    }
+    Dfs(u, v); 
+    sz[v] += sz[u];
+  }
+  out[v] = idd;
+}
+
+signed main(){
+  freopen("snowcow.in", "r", stdin);
+  freopen("snowcow.out", "w", stdout);
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n, q;
+  cin >> n >> q;
+  for(int i = 0; i < n - 1; ++i) {
+    int x, y;
+    cin >> x >> y;
+    g[x].push_back(y);
+    g[y].push_back(x);
+  }
+  Dfs(1, 1);
+  Bit prnts(n), sub(n);  
+  while (q--) {
+    int t;
+    cin >> t;
+    if (t == 1) {
+      int v, c;
+      cin >> v >> c;
+      auto it = se[c].upper_bound({in[v], -1});
+      if (it != se[c].begin() && prev(it)->second >= in[v]) { 
+        continue;
+      }
+      sub.upd(in[v], sz[v]); 
+      prnts.upd(in[v] + 1, out[v], 1); 
+      vector<pair<int, int>> to_erase; 
+      while (it != se[c].end() && it->first <= out[v]) {
+        int u = ord[it->first];
+        sub.upd(in[u], -sz[u]); 
+        prnts.upd(in[u] + 1, out[u], -1); 
+        to_erase.emplace_back(*it); 
+        it++; 
+      } 
+      for (auto e : to_erase) {
+        se[c].erase(e); 
+      }
+      se[c].emplace(in[v], out[v]); 
+    } else {
+      int v;
+      cin >> v; 
+      long long ans = prnts.qry(in[v]) * sz[v];
+      ans += sub.qry(in[v], out[v]); 
+      cout << ans << '\n'; 
+    }
+  }
+  return 0;
+}
