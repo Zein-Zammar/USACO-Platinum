@@ -1,0 +1,66 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+const int N = 2e5 + 5;
+
+int p[N];
+vector<int> g[N]; 
+set<int> peremiter[N];
+
+int get(int v) {
+  return p[v] = (p[v] == v ? v : get(p[v])); 
+}
+
+void unite(int u, int v) {
+  u = get(u), v = get(v);
+  if (u == v) {
+    return;
+  }
+  int n = peremiter[u].size(), m = peremiter[v].size();
+  if (n > m) swap(u, v);
+  for (int k : peremiter[u]) {
+    peremiter[v].insert(k); 
+  }
+  p[u] = v; 
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n, m;
+  cin >> n >> m;
+  for (int i = 0; i < m; ++i) {
+    int u, v;
+    cin >> u >> v;
+    g[u].push_back(v);
+    g[v].push_back(u); 
+  }
+  for (int i = 1; i <= n; ++i) {
+    p[i] = i; 
+  }
+  long long ans = 0; 
+  for (int v = 1; v <= n; ++v) {
+    for (int u : g[v]) {
+      if (u < v) {
+        int pu = get(u); 
+        if (peremiter[pu].count(v)) {
+          peremiter[pu].erase(v); 
+        }
+        unite(u, v); 
+      } else {
+        int pv = get(v); 
+        peremiter[pv].insert(u); 
+      }
+    }
+    int pv = get(v); 
+    ans += peremiter[pv].size(); 
+  }
+  cout << ans - m << '\n'; 
+  return 0;
+}
