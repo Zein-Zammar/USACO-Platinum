@@ -1,0 +1,55 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+const int N = 3e5 + 5;
+
+int a[N];
+char c[N];
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n;
+  cin >> n;
+  for (int i = 0; i < n; ++i) {
+    cin >> a[i];
+  }
+  for (int i = 0; i < n - 1; ++i) {
+    cin >> c[i];
+  }
+  int p = 0, la = -1; 
+  for (int i = 0; i < n; ++i) {
+    set<int> se;
+    int dir = (c[p] == 'U' ? 1 : -1); 
+    if (la != -1) {
+      se.insert(dir * a[la]); 
+    }
+    int j = p;
+    while (j + 1 < n - 1 && c[j + 1] == c[j]) {
+      j++;
+    }
+    int len = j - p + 2; 
+    while (i < n && (int) se.size() < len) {
+      auto it = se.lower_bound(dir * a[i]);
+      if (it != se.end()) {
+        se.erase(it); 
+      } else if (!se.empty()) {
+        p++;        
+      }
+      se.insert(dir * a[i]); 
+      i++; 
+    }
+    if ((int) se.size() == len) {
+      la = i - 1; 
+      --i;
+    }
+  }
+  cout << p << '\n';
+  return 0;
+}
