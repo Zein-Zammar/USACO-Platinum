@@ -1,0 +1,62 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+const int N = 51; 
+
+int a[N];
+int dp[N][N][N][N];
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  freopen("subrev.in", "r", stdin);
+  freopen("subrev.out", "w", stdout);
+  int n;
+  cin >> n;
+  for (int i = 0; i < n; ++i) {
+    cin >> a[i];
+  }
+  for (int i = 0; i < n; ++i) {
+    for (int lb = 1; lb < N; ++lb) {
+      for (int ub = lb; ub < N; ++ub) {
+        dp[i][i][lb][ub] = (lb <= a[i] && ub >= a[i]); 
+      }
+    }
+  }
+  for (int len = 2; len <= n; ++len) {
+    for (int i = 0; i + len <= n; ++i) {
+      int j = i + len - 1;
+      for (int lb = 1; lb < N; ++lb) {
+        for (int ub = lb; ub < N; ++ub) {
+          int val = dp[i + 1][j][lb][ub];
+          val = max(val, dp[i][j - 1][lb][ub]);
+          if (lb <= a[i] && ub >= a[i]) {//use i only
+            int lbb = max(a[i], lb); 
+            int ubb = min(a[i], ub);
+            val = max(val, 1 + dp[i + 1][j][lbb][ub]);             
+            val = max(val, 1 + dp[i + 1][j - 1][lb][ubb]);             
+          }
+          if (lb <= a[j] && ub >= a[j]) {//use j only
+            int ubb = min(a[j], ub);
+            int lbb = max(a[j], lb); 
+            val = max(val, 1 + dp[i][j - 1][lb][ubb]); 
+            val = max(val, 1 + dp[i + 1][j - 1][lbb][ub]);
+          }
+          int mn = min(a[i], a[j]), mx = max(a[i], a[j]); 
+          if (mn >= lb && mx <= ub) {//use i & j
+            val = max(val, dp[i + 1][j - 1][mn][mx] + 2);            
+          }
+          dp[i][j][lb][ub] = val; 
+        }
+      }
+    }
+  }
+  cout << dp[0][n - 1][1][N - 1] << '\n'; 
+  return 0;
+}
