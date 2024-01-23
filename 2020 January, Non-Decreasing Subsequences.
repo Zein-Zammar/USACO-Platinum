@@ -1,0 +1,115 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+const int K = 22; 
+const int N = 5e4 + 4; 
+const int Q = 2e5 + 5;
+const int md = (int) 1e9 + 7;
+
+int n, k;
+int a[N];
+int dpL[N][K][K];
+int dpR[N][K][K];
+int lend[K], ren[K];
+int ql[Q], qr[Q], qans[Q];
+
+void add(int& x, int y) {
+  x += y;
+  if (x >= md) x -= md;
+}
+
+int mul(int x, int y) {
+  return (int) ((long long) x * y % md);
+}
+
+void calc(int l, int r, vector<int> qs) {
+  int mid = (l + r) / 2; 
+  memset(dpL[mid + 1], 0, sizeof(dpL[mid + 1]));
+  for (int i = mid; i >= l; --i) {
+    memcpy(dpL[i], dpL[i + 1], sizeof(dpL[i])); 
+    for (int j = a[i]; j <= k; ++j) {
+      for (int kk = j; kk <= k; ++kk) {
+        add(dpL[i][a[i]][kk], dpL[i + 1][j][kk]);
+      }
+    }
+    add(dpL[i][a[i]][a[i]], 1);
+  }
+  memset(dpR[mid], 0, sizeof (dpR[mid]));
+  for (int i = mid + 1; i <= r; ++i) {
+    memcpy(dpR[i], dpR[i - 1], sizeof(dpR[i]));
+    for (int j = 1; j <= a[i]; ++j) {
+      for (int kk = j; kk <= a[i]; ++kk) {
+        add(dpR[i][j][a[i]], dpR[i - 1][j][kk]);
+      }
+    }
+    add(dpR[i][a[i]][a[i]], 1); 
+  }
+  for (int qid : qs) {
+    memset(lend, 0, sizeof lend);
+    memset(ren, 0, sizeof ren);
+    lend[1] = ren[k] = 1;
+    for (int i = 1; i <= k; ++i) {
+      for (int j = i; j <= k; ++j) {
+        add(lend[j], dpL[ql[qid]][i][j]);
+        add(ren[i], dpR[qr[qid]][i][j]);
+      }
+    }
+    for (int i = 1; i <= k; ++i) {
+      for (int j = i; j <= k; ++j) {
+        add(qans[qid], mul(lend[i], ren[j]));
+      }
+    }
+  }
+}
+
+void solve(int l, int r, vector<int> qs) {
+  if (l == r) {
+    for (int i : qs) {
+      qans[i] = 2;
+    }
+    return; 
+  }
+  int mid = (l + r) / 2; 
+  vector<int> qsl, qsr, sq; 
+  for (int i : qs) {
+    if (qr[i] <= mid) {
+      qsl.push_back(i);
+    } else if (ql[i] > mid) {
+      qsr.push_back(i);
+    } else {
+      sq.push_back(i);
+    }
+  }
+  calc(l, r, sq);
+  solve(l, mid, qsl);
+  solve(mid + 1, r, qsr); 
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  freopen("nondec.in", "r", stdin);
+  freopen("nondec.out", "w", stdout);
+  cin >> n >> k;
+  for (int i = 1; i <= n; ++i) {
+    cin >> a[i];
+  }
+  int q;
+  cin >> q;
+  for (int i = 0; i < q; ++i) {
+    cin >> ql[i] >> qr[i];
+  }
+  vector<int> qs(q); 
+  iota(qs.begin(), qs.end(), 0); 
+  solve(1, n, qs);
+  for (int i = 0; i < q; ++i) {
+    cout << qans[i] << '\n';
+  }
+  return 0;
+}
