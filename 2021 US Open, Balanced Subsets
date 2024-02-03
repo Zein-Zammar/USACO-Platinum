@@ -1,0 +1,156 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define deb(...)
+#endif
+
+const int N = 152;
+const int md = (int) 1e9 + 7; 
+
+int g[N][N];
+int ps[N][2][2][N][N];
+int dp[N][2][2][N][N];
+
+void add(int& a, int b) {
+  a += b;
+  if (a >= md) a -= md; 
+}
+
+int sub(int a, int b) {
+  a -= b;
+  if (a < 0) a += md;
+  return a; 
+}
+
+int sum(int row, bool b1, bool b2, int x, int x2, int y, int y2) {
+  int ret = ps[row][b1][b2][x2][y2];
+  ret = sub(ret, ps[row][b1][b2][x - 1][y2]);
+  ret = sub(ret, ps[row][b1][b2][x2][y - 1]);
+  add(ret, ps[row][b1][b2][x - 1][y - 1]);
+  return ret; 
+}
+
+bool check(int row, int l, int r) {
+  return (g[row][r] - g[row][l - 1] == r - l + 1);
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n;
+  cin >> n;
+  for (int i = 1; i <= n; ++i) {
+    for (int j = 1; j <= n; ++j) {
+      char c;
+      cin >> c;
+      g[i][j] += (c == 'G');
+    }
+  }
+  for (int i = 1; i <= n; ++i) {
+    for (int j = 1; j <= n; ++j) {
+      g[i][j] += g[i][j - 1]; 
+    }
+  }
+  for (int row = 1; row <= n; ++row) {
+    for (int l = 1; l <= n; ++l) {
+      for (int r = l; r <= n; ++r) {
+        if (check(row, l, r)) {
+          dp[row][0][0][l][r] = 1; 
+        }
+      }
+    }
+  }
+  int ans = 0; 
+  for (int row = 1; row <= n; ++row) {
+    for (int increasedL = 0; increasedL <= 1; ++increasedL) {
+      for (int decreasedR = 0; decreasedR <= 1; ++decreasedR) {
+        if (increasedL) {
+          if (decreasedR) {
+            //1 <= lastL <= newL && newR <= lastR <= n -- checked
+            for (int newL = 1; newL <= n; ++newL) {
+              for (int newR = newL; newR <= n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][1][1][newL][newR], sum(row - 1, increasedL, decreasedR, 1, newL, newR, n)); 
+              }
+            }
+          } else {
+            //1 <= lastL <= newL && newR < lastR <= n -- checked
+            for (int newL = 1; newL < n; ++newL) {
+              for (int newR = newL; newR < n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][1][1][newL][newR], sum(row - 1, increasedL, decreasedR, 1, newL, newR + 1, n));
+              }
+            }
+            //1 <= lastL <= newL && newL <= lastR <= newR -- checked
+            for (int newL = 1; newL <= n; ++newL) {
+              for (int newR = newL; newR <= n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][1][0][newL][newR], sum(row - 1, increasedL, decreasedR, 1, newL, newL, newR)); 
+              }
+            }
+          }
+        } else {
+          if (decreasedR) {
+            //newL <= lastL <= newR && newR <= lastR <= n -- checked
+            for (int newL = 1; newL <= n; ++newL) {
+              for (int newR = newL; newR <= n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][0][1][newL][newR], sum(row - 1, increasedL, decreasedR, newL, newR, newR, n)); 
+              }
+            }
+            //1 <= lastL < newL && newR <= lastR <= n -- checked
+            for (int newL = 2; newL <= n; ++newL) {
+              for (int newR = newL; newR <= n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][1][1][newL][newR], sum(row - 1, increasedL, decreasedR, 1, newL - 1, newR, n)); 
+              }
+            }
+          } else {
+            //newL <= lastL <= newR && newL <= lastR <= newR -- checked
+            for (int newL = 1; newL <= n; ++newL) {
+              for (int newR = newL; newR <= n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][0][0][newL][newR], sum(row - 1, increasedL, decreasedR, newL, newR, newL, newR)); 
+              }
+            }
+            //newL <= lastL <= newR && newR < lastR <= n -- checked
+            for (int newL = 1; newL <= n; ++newL) {
+              for (int newR = newL; newR < n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][0][1][newL][newR], sum(row - 1, increasedL, decreasedR, newL, newR, newR + 1, n));
+              }
+            }
+            //1 <= lastL < newL && newL <= lastR <= newR -- checked
+            for (int newL = 2; newL <= n; ++newL) {
+              for (int newR = newL; newR <= n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][1][0][newL][newR], sum(row - 1, increasedL, decreasedR, 1, newL - 1, newL, newR)); 
+              }
+            }
+            //1 <= lastL < newL && newR < lastR <= n -- checked
+            for (int newL = 2; newL < n; ++newL) {
+              for (int newR = newL; newR < n; ++newR) {
+                if (!check(row, newL, newR)) continue;
+                add(dp[row][1][1][newL][newR], sum(row - 1, increasedL, decreasedR, 1, newL - 1, newR + 1, n)); 
+              }
+            }
+          }
+        }
+        for (int newL = 1; newL <= n; ++newL) {
+          for (int newR = 1; newR <= n; ++newR) {
+            add(ans, dp[row][increasedL][decreasedR][newL][newR]);
+            ps[row][increasedL][decreasedR][newL][newR] = dp[row][increasedL][decreasedR][newL][newR];
+            add(ps[row][increasedL][decreasedR][newL][newR], ps[row][increasedL][decreasedR][newL - 1][newR]);
+            add(ps[row][increasedL][decreasedR][newL][newR], ps[row][increasedL][decreasedR][newL][newR - 1]);
+            ps[row][increasedL][decreasedR][newL][newR] = sub(ps[row][increasedL][decreasedR][newL][newR], ps[row][increasedL][decreasedR][newL - 1][newR - 1]);
+          }
+        }
+      }
+    }
+  }
+  cout << ans << '\n'; 
+  return 0;
+}
