@@ -1,0 +1,81 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define debug(...)
+#endif
+
+const int N = 4e5 + 5; 
+const int md = (int) 1e9 + 7;
+
+int id; 
+int p[N];
+int pw[N];
+
+struct value {
+  int residue = 0, len = 0; 
+} val[N];
+
+void add(int& x, int y) {
+  x += y;
+  if (x >= md) x -= md; 
+}
+
+int mul(int x, int y) {
+  return (int) ((long long) x * y % md);
+}
+
+value operator + (value x, value y) {
+  value ret;
+  ret.residue = mul(x.residue, pw[y.len]);
+  add(ret.residue, y.residue);
+  ret.len = x.len + y.len; 
+  return ret; 
+}
+
+int get(int v) {
+  if (p[v] != v) {
+    int newP = get(p[v]); 
+    val[v] = val[v] + val[p[v]];
+    p[v] = newP; 
+  }
+  return p[v]; 
+}
+
+void merge(int u, int v, int ind) {
+  int ru = get(u), rv = get(v);
+  if (ru == rv) return; 
+  int cur = id++; 
+  p[cur] = p[ru] = p[rv] = cur; 
+  value e; e.residue = ind; e.len = 1; 
+  value ov = val[v], ou = val[u]; 
+  val[ru] = e + ov;
+  val[rv] = e + ou;
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  pw[0] = 1;
+  for (int i = 1; i < N; ++i) {
+    pw[i] = mul(pw[i - 1], 10); 
+  }
+  int n, m;
+  cin >> n >> m;
+  id = n + 1; 
+  for (int i = 1; i <= n; ++i) {
+    p[i] = i; 
+  }
+  for (int i = 1; i <= m; ++i) {
+    int u, v;
+    cin >> u >> v;
+    merge(u, v, i); 
+  }
+  for (int v = 1; v <= n; ++v) {
+    get(v); 
+    cout << val[v].residue << '\n'; 
+  }
+  return 0;
+}
