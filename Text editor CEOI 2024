@@ -1,0 +1,150 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define debug(...)
+#endif
+
+using arr = array<int, 3>;
+
+const int N = 1e6 + 6; 
+const int INF = 2e9 + 9;
+
+int n;
+int ans;
+int l[N]; 
+int sx, sy;
+int ex, ey; 
+int cost[N][2];
+int up[N], down[N];
+priority_queue<arr, vector<arr>, greater<arr>> pq; 
+
+void init() {
+  stack<int> stk; 
+  for (int i = 1; i <= n; ++i) {
+    while (!stk.empty() && l[stk.top()] > l[i]) {
+      stk.pop();
+    }
+    if (!stk.empty()) {
+      up[i] = stk.top(); 
+    }
+    stk.push(i); 
+  }
+  while (!stk.empty()) {
+    stk.pop();
+  }
+  for (int i = n; i >= 1; --i) {
+    while (!stk.empty() && l[stk.top()] > l[i]) {
+      stk.pop();
+    }
+    if (!stk.empty()) {
+      down[i] = stk.top();
+    }
+    stk.push(i); 
+  }
+  for (int i = 0; i <= n; ++i) {
+    cost[i][0] = cost[i][1] = INF;
+  }
+  ans = INF;
+  cost[sx][0] = sy - 1; 
+  pq.push({cost[sx][0], sx, 0});
+  for (int i = sx; i >= 1; --i) {
+    if (l[i] + 1 > sy) {
+      if (i == 1 && ex <= sx) {
+        ans = sx - ex + abs(sy - ey);
+      }
+    cost[i][1] = sx - i + l[i] + 1 - sy;
+    pq.push({cost[i][1], i, 1});
+    } else {
+      cost[i][1] = sx - i; 
+      pq.push({cost[i][1], i, 1});
+      if (ex <= sx && i <= ex) {
+        ans = sx - ex + abs(sy - ey);
+      }
+      break;
+    } 
+  }
+  for (int i = sx + 1; i <= n; ++i) {
+    if (l[i] + 1 > sy) {
+      if (i == n && ex >= sx) {
+        ans = ex - sx + abs(sy - ey);
+      }
+    cost[i][1] = i - sx + l[i] + 1 - sy;
+    pq.push({cost[i][1], i, 1});
+    } else {
+      cost[i][1] = i - sx; 
+      pq.push({cost[i][1], i, 1});
+      if (ex > sx && i >= ex) {
+        ans = ex - sx + abs(sy - ey);
+      }
+      break; 
+    }
+  }
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  cin >> n;
+  cin >> sx >> sy;
+  cin >> ex >> ey; 
+  for (int i = 1; i <= n; ++i) {
+    cin >> l[i];
+  }
+  init();
+  while (!pq.empty()) {
+    auto [c, x, type] = pq.top();
+    pq.pop();
+    if (c != cost[x][type]) {
+      continue; 
+    }
+    if (type == 0) {
+      ans = min(ans, c + abs(x - ex) + ey - 1);
+      if (x - 1 > 0 && c + 1 < cost[x - 1][0]) {//up
+        cost[x - 1][0] = c + 1;
+        pq.push({cost[x - 1][0], x - 1, 0});
+      }
+      if (x + 1 <= n && c + 1 < cost[x + 1][0]) {//down
+        cost[x + 1][0] = c + 1;
+        pq.push({cost[x + 1][0], x + 1, 0});
+      }
+      if (x - 1 > 0 && c + 1 < cost[x - 1][1]) {//left
+        cost[x - 1][1] = c + 1;
+        pq.push({cost[x - 1][1], x - 1, 1});
+      }
+    } else {
+      if (x <= ex && (!down[x] || down[x] >= ex)) {
+        ans = min(ans, c + ex - x + abs(l[x] + 1 - ey));
+      } 
+      if (x > ex && (!up[x] || up[x] <= ex)) {
+        ans = min(ans, c + x - ex + abs(l[x] + 1 - ey));
+      }
+      if (x + 1 <= n && c + 1 < cost[x + 1][0]) {//right
+        cost[x + 1][0] = c + 1;
+        pq.push({cost[x + 1][0], x + 1, 0});
+      }
+      if (x + 1 <= n && c + 1 + max(0, l[x + 1] - l[x]) < cost[x + 1][1]) {//down
+        cost[x + 1][1] = c + 1 + max(0, l[x + 1] - l[x]);
+        pq.push({cost[x + 1][1], x + 1, 1}); 
+      }
+      if (x - 1 >= 0 && c + 1 + max(0, l[x - 1] - l[x]) < cost[x - 1][1]) {//up
+        cost[x - 1][1] = c + 1 + max(0, l[x - 1] - l[x]);
+        pq.push({cost[x - 1][1], x - 1, 1});
+      }
+      for (int i : {up[x], down[x]}) {
+        if (i != 0 && c + abs(x - i) < cost[i][1]) {
+          cost[i][1] = c + abs(x - i);
+          pq.push({cost[i][1], i, 1}); 
+        }
+      }
+    }
+    if (c + l[x] < cost[x][type ^ 1]) {
+      cost[x][type ^ 1] = c + l[x];
+      pq.push({cost[x][type ^ 1], x, type ^ 1});
+    }
+  }
+  cout << ans << '\n';
+  return 0;
+}
