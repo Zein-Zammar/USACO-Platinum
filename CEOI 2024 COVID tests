@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std; 
+
+int N;
+long double P;
+long double pre[1003];
+
+bool test_students(std::vector<bool> mask) {
+    string mask_str(N, ' ');
+    for (int i = 0; i < N; i++)
+        mask_str[i] = mask[i] ? '1' : '0';
+
+    printf("Q %s\n", mask_str.c_str());
+    fflush(stdout);
+
+    char answer;
+    scanf(" %c", &answer);
+    return answer == 'P';
+}
+
+bool check(vector<int> ask) {
+  vector<bool> test(N);
+  for (int i : ask) {
+    test[i] = true;
+  }
+  return test_students(test); 
+}
+
+int main() {
+  int T;
+  cin >> N >> P >> T;
+  pre[0] = 1;
+  for (int i = 1; i <= N; ++i) {
+    pre[i] = pre[i - 1] * (1.0 - P);
+  }
+  auto calc_prob = [&](int g) {
+    return 1.0 - pre[g];
+  };
+  auto eval = [&](long double d) {
+    return abs(0.5 - d); 
+  };
+  auto extract = [&](vector<int>& v, int sz) {
+    vector<int> ret; 
+    while (!v.empty() && sz) {
+      ret.push_back(v.back());
+      v.pop_back();
+      sz--;
+    }
+    return ret; 
+  };
+  int optsize = 1; 
+  while (eval(calc_prob(optsize + 1)) < eval(calc_prob(optsize))) {
+    optsize++;
+  }
+  assert(optsize <= N); 
+  auto find_positive = [&]() {
+    vector<bool> ret(N);
+    vector<int> unknown(N), has;
+    iota(unknown.begin(), unknown.end(), 0);
+    while (!unknown.empty() || !has.empty()) {
+      if (!has.empty()) {
+        int sz = (int) has.size();
+        if (sz == 1) {
+          ret[has[0]] = true;
+          has.clear();
+          continue; 
+        }
+        int x = 1; 
+        long double tot = calc_prob(sz);
+        while (x < sz && eval(calc_prob(x + 1) / tot) < eval(calc_prob(x) / tot)) {
+          x++;
+        }
+        vector<int> ask = extract(has, x);
+        if (check(ask)) {
+          unknown.insert(unknown.end(), has.begin(), has.end());
+          has = ask;
+        } 
+      } else {
+        vector<int> ask = extract(unknown, optsize);
+        if (check(ask)) {
+          has = ask;
+        }
+      }
+    }
+    return ret;
+  };
+  for (int i = 0; i < T; i++) {
+      vector<bool> answer = find_positive();
+      assert(answer.size() == (size_t)N);
+
+      std::string answer_str(N, ' ');
+      for (int j = 0; j < N; j++)
+          answer_str[j] = answer[j] ? '1' : '0';
+
+      printf("A %s\n", answer_str.c_str());
+      fflush(stdout);
+
+      char verdict;
+      scanf(" %c", &verdict);
+      if (verdict == 'W')
+          exit(0);
+  }
+
+  return 0;
+}
