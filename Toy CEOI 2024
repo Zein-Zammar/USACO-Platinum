@@ -1,0 +1,86 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define debug(...)
+#endif
+
+const int N = 1503; 
+
+int n, m, width, height; 
+char c[N][N];
+int up[N][N];
+int lft[N][N];
+int rit[N][N];
+int down[N][N];
+bool vis[N][N];
+
+void dfs(int i, int j) {
+  if (vis[i][j]) {
+    return; 
+  }
+  vis[i][j] = true; 
+  if (j - 1 >= 0 && c[i][j - 1] != 'X' && min(down[i][j], down[i][j - 1]) - max(up[i][j], up[i][j - 1]) + 1 >= height) {
+    dfs(i, j - 1); 
+  }
+  if (j + 1 < m && c[i][j + 1] != 'X' && min(down[i][j], down[i][j + 1]) - max(up[i][j], up[i][j + 1]) + 1 >= height) {
+    dfs(i, j + 1); 
+  }
+  if (i - 1 >= 0 && c[i - 1][j] != 'X' && min(rit[i][j], rit[i - 1][j]) - max(lft[i][j], lft[i - 1][j]) + 1 >= width) {
+    dfs(i - 1, j); 
+  }
+  if (i + 1 < n && c[i + 1][j] != 'X' && min(rit[i][j], rit[i + 1][j]) - max(lft[i][j], lft[i + 1][j]) + 1 >= width) {
+    dfs(i + 1, j);
+  }
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  cin >> n >> m >> width >> height; 
+  int xh, yh, xv, yv; 
+  cin >> xh >> yh >> xv >> yv; 
+  swap(n, m);
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      cin >> c[i][j];
+    }
+  }
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      if (c[i][j] != 'X') {
+        up[i][j] = down[i][j] = i;
+        lft[i][j] = rit[i][j] = j;
+      }
+      if (i - 1 >= 0 && c[i - 1][j] != 'X') {
+        up[i][j] = up[i - 1][j];
+      }
+      if (j - 1 >= 0 && c[i][j - 1] != 'X') {
+        lft[i][j] = lft[i][j - 1]; 
+      }
+    }
+  }
+  for (int i = n - 1; i >= 0; --i) {
+    for (int j = m - 1; j >= 0; --j) {
+      if (i + 1 < n && c[i + 1][j] != 'X') {
+        down[i][j] = down[i + 1][j];
+      }
+      if (j + 1 < m && c[i][j + 1] != 'X') {
+        rit[i][j] = rit[i][j + 1];
+      }
+    }
+  }
+  dfs(yh, xv);
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      if (c[i][j] == '*' && vis[i][j]) {
+        cout << "YES" << '\n';
+        return 0; 
+      }
+    }
+  }
+  cout << "NO" << '\n'; 
+  return 0;
+}
