@@ -1,0 +1,113 @@
+#include "bits/stdc++.h"
+using namespace std;
+
+#ifdef Nero
+#include "Deb.h"
+#else
+#define debug(...)
+#endif
+
+const int N = 4e6 + 6; 
+
+int idd; 
+int tr[N];
+int ch[N][2]; 
+int emp[N];
+int occupied[N];
+
+int ins(int cur, int id, string& s) {
+  //debug(cur, id, s); 
+  tr[cur]++;
+  int ret = 0;
+  if (id < (int) s.size()) {
+    int b = s[id] - '0';
+    if (!ch[cur][b]) {
+      ch[cur][b] = ++idd; 
+    }
+    ret = ins(ch[cur][b], id + 1, s); 
+  } else {
+    bool leaf = (!ch[cur][0]) && (!ch[cur][1]);
+    if (leaf) {
+      emp[cur] = N;
+      if (tr[cur] == 1) {
+        occupied[cur] = 2;
+      } else {
+        occupied[cur] = 3;
+        ch[cur][0] = ++idd; 
+        tr[idd] = 1; 
+        emp[idd] = N;
+        occupied[idd] = 2;
+        ch[cur][1] = ++idd; 
+        tr[idd] = 1; 
+        emp[idd] = N; 
+        occupied[idd] = 2; 
+        ret = 2; 
+      }
+      //debug(tr[cur], ret); 
+      return ret; 
+    } else {
+      int mn = min(occupied[cur], emp[cur]) - 1;
+      if (mn == 0) {
+        ret = 1; 
+        if (!ch[cur][0]) {
+          ch[cur][0] = ++idd; 
+        } else {
+          ch[cur][1] = ++idd; 
+        }
+        tr[idd] = 1; 
+        emp[idd] = N;
+        occupied[idd] = 2;
+      } else {
+        if (ch[cur][0] && occupied[ch[cur][0]] == mn) {
+          ret = 1 + ins(ch[cur][0], id + 1, s); 
+        } else if (ch[cur][0] && emp[ch[cur][0]] == mn) {
+          ret = 1 + ins(ch[cur][0], id + 1, s);
+        } else if (ch[cur][1] && occupied[ch[cur][1]] == mn) {
+          ret = 1 + ins(ch[cur][1], id + 1, s);
+        } else if (ch[cur][1] && emp[ch[cur][1]] == mn) {
+          ret = 1 + ins(ch[cur][1], id + 1, s);
+        } else {
+          assert(false); 
+        }        
+      }
+      //debug(cur, mn);
+      assert(ret == mn + 1); 
+    }
+  }
+  //not a leaf
+  emp[cur] = occupied[cur] = N;
+  for (int u : {ch[cur][0], ch[cur][1]}) {
+    if (u) {
+      emp[cur] = min(emp[cur], emp[u] + 1);
+      occupied[cur] = min(occupied[cur], occupied[u] + 1);      
+    } else {
+      emp[cur] = 1; 
+    }
+  }
+  //debug(cur, emp[cur], occupied[cur], ret);
+  return ret; 
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n;
+  cin >> n;
+  vector<string> s(n);
+  for (int i = 0; i < n; ++i) {
+    cin >> s[i];
+  }
+  vector<int> ord(n);
+  iota(ord.begin(), ord.end(), 0);
+  sort(ord.begin(), ord.end(), [&](int i, int j) {
+    return s[i].size() > s[j].size(); 
+  });
+  int ans = 0; 
+  for (int i : ord) {
+    ans += ins(0, 0, s[i]);
+    //debug(i, ans); 
+    //cout << '\n';
+  }
+  cout << ans << '\n'; 
+  return 0;
+}
